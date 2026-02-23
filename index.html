@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Engineering & Product Learning Pathways Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Open Sans',sans-serif;background:#000;min-height:100vh}
+canvas{display:block}
+button{cursor:pointer;outline:none;border:none;background:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+const C={green:"#86BC25",black:"#000",bg:"#0A0A0A",card:"#141414",border:"#222",gray600:"#666",gray400:"#999",gray200:"#CCC",white:"#FFF",blue:"#0097A9",blueHover:"#00ADC2",blueDark:"#007C89"};
+const FONT="'Open Sans',sans-serif";
+const BOLD={fontFamily:FONT,fontWeight:800};
+const SEMI={fontFamily:FONT,fontWeight:600};
+const REG={fontFamily:FONT,fontWeight:400};
+const LIGHT={fontFamily:FONT,fontWeight:300};
+
+const LogoImg=({h=48})=>(
+<svg height={h} viewBox="0 0 400 80" xmlns="http://www.w3.org/2000/svg">
+<style>{`@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@800&display=swap');`}</style>
+<text x="0" y="64" fill="#FFFFFF" style={{fontFamily:"'Open Sans',Impact,'Arial Black',sans-serif",fontWeight:800,fontSize:"76px",letterSpacing:"-2px"}}>Deloitte</text>
+<circle cx="322" cy="56" r="10" fill="#86BC25"/>
+</svg>
+);
+
+const Breadcrumb=({items})=>(
+<div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 24px",borderBottom:`1px solid ${C.border}`}}>
+{items.map((item,i)=>(
+<div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+{i>0&&<span style={{color:C.gray600,fontSize:12}}>›</span>}
+{item.onClick?(
+<button onClick={item.onClick} style={{color:C.gray400,fontSize:12,...REG,cursor:"pointer",background:"none",border:"none"}}
+onMouseEnter={e=>e.currentTarget.style.color=C.white}
+onMouseLeave={e=>e.currentTarget.style.color=C.gray400}
+>{item.label}</button>
+):(
+<span style={{color:C.white,fontSize:12,...SEMI}}>{item.label}</span>
+)}
+</div>
+))}
+</div>
+);
+
+const AnimSphere=({size=500})=>{
+const ref=useRef(null);const raf=useRef(0);
+useEffect(()=>{
+const cv=ref.current;if(!cv)return;
+const ctx=cv.getContext("2d");const dpr=window.devicePixelRatio||1;
+cv.width=size*dpr;cv.height=size*dpr;ctx.scale(dpr,dpr);
+const cx=size/2,cy=size/2,r=size*0.40;
+let t=0,running=true;
+const arcs=Array.from({length:90},()=>({tilt:(Math.random()-0.3)*Math.PI*0.8,phase:Math.random()*Math.PI*2,speed:0.3+Math.random()*0.6,len:0.15+Math.random()*0.35,bright:0.4+Math.random()*0.6}));
+const nodes=Array.from({length:60},()=>({tilt:(Math.random()-0.3)*Math.PI*0.8,phase:Math.random()*Math.PI*2,speed:0.2+Math.random()*0.5,size:1+Math.random()*2.5}));
+const proj=(th,tilt)=>{const x=r*Math.cos(th),y=r*Math.sin(th)*Math.cos(tilt),z=r*Math.sin(th)*Math.sin(tilt);return{x:cx+x,y:cy-y,z};};
+const draw=()=>{
+if(!running)return;ctx.clearRect(0,0,size,size);t+=0.008;
+const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r*1.3);g.addColorStop(0,"rgba(134,188,37,0.04)");g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.fillRect(0,0,size,size);
+for(const a of arcs){const s0=a.phase+t*a.speed,e0=s0+a.len*Math.PI;ctx.beginPath();let started=false;for(let s=0;s<=30;s++){const th=s0+(e0-s0)*(s/30),p=proj(th,a.tilt),d=(p.z+r)/(2*r);if(d<0.15){started=false;continue;}const al=a.bright*(0.1+d*0.7)*(1-Math.abs(s/30-0.5)*1.5);ctx.strokeStyle=`rgba(134,188,37,${Math.max(0,al)})`;ctx.lineWidth=0.5+d*1.8;if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);}ctx.stroke();}
+for(const nd of nodes){const th=nd.phase+t*nd.speed,p=proj(th,nd.tilt),d=(p.z+r)/(2*r);if(d<0.2)continue;const a=0.2+d*0.8;ctx.beginPath();ctx.arc(p.x,p.y,nd.size+3,0,Math.PI*2);ctx.fillStyle=`rgba(134,188,37,${a*0.2})`;ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,nd.size*d,0,Math.PI*2);ctx.fillStyle=`rgba(${120+d*60},${200+d*50},30,${a})`;ctx.fill();}
+raf.current=requestAnimationFrame(draw);};draw();
+return()=>{running=false;cancelAnimationFrame(raf.current);};
+},[size]);
+return <canvas ref={ref} style={{width:size,height:size}}/>;
+};
+
+const OrganicSphere=({size=320})=>{
+const ref=useRef(null);const raf=useRef(0);
+useEffect(()=>{
+const cv=ref.current;if(!cv)return;const ctx=cv.getContext("2d");const dpr=window.devicePixelRatio||1;
+cv.width=size*dpr;cv.height=size*dpr;ctx.scale(dpr,dpr);
+const cx=size/2,cy=size/2,r=size*0.36;let t=0,running=true;
+const dots=Array.from({length:600},()=>({lat:(Math.random()-0.5)*Math.PI,lon:Math.random()*Math.PI*2,jitter:0.92+Math.random()*0.16,size:0.5+Math.random()*2,bright:0.3+Math.random()*0.7}));
+const tendrils=Array.from({length:45},()=>({startLat:-Math.PI*0.3-Math.random()*Math.PI*0.3,startLon:Math.random()*Math.PI*2,curve:-0.5-Math.random()*1.5,length:0.3+Math.random()*0.6,speed:0.1+Math.random()*0.15,width:1+Math.random()*2,bright:0.4+Math.random()*0.6}));
+const bumps=[];for(let i=0;i<8;i++){const lat=(Math.random()-0.3)*Math.PI*0.7,lon=Math.random()*Math.PI*2,bR=0.15+Math.random()*0.2,dc=30+Math.floor(Math.random()*40);for(let j=0;j<dc;j++){bumps.push({lat:lat+(Math.random()-0.5)*bR,lon:lon+(Math.random()-0.5)*bR,elevation:1.0+Math.random()*0.12,size:0.8+Math.random()*1.5,bright:0.5+Math.random()*0.5});}}
+const proj=(lat,lon,rad)=>{const y=rad*Math.sin(lat),rr=rad*Math.cos(lat),x=rr*Math.cos(lon),z=rr*Math.sin(lon);return{x:cx+x,y:cy-y,z};};
+const draw=()=>{
+if(!running)return;ctx.clearRect(0,0,size,size);t+=0.005;
+const g=ctx.createRadialGradient(cx,cy+r*0.3,0,cx,cy+r*0.3,r*1.5);g.addColorStop(0,"rgba(134,188,37,0.06)");g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.fillRect(0,0,size,size);
+const rot=t*0.3;
+for(const d of dots){const p=proj(d.lat,d.lon+rot,r*d.jitter);const depth=(p.z+r)/(2*r);if(depth<0.1)continue;const a=d.bright*(0.1+depth*0.7);ctx.beginPath();ctx.arc(p.x,p.y,d.size*depth,0,Math.PI*2);ctx.fillStyle=`rgba(134,188,37,${a})`;ctx.fill();}
+for(const b of bumps){const p=proj(b.lat,b.lon+rot,r*b.elevation);const depth=(p.z+r*b.elevation)/(2*r*b.elevation);if(depth<0.15)continue;const a=b.bright*(0.15+depth*0.75);ctx.beginPath();ctx.arc(p.x,p.y,b.size*depth+2,0,Math.PI*2);ctx.fillStyle=`rgba(134,188,37,${a*0.25})`;ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,b.size*depth,0,Math.PI*2);ctx.fillStyle=`rgba(${100+depth*80},${200+depth*55},${20+depth*20},${a})`;ctx.fill();}
+for(const tr of tendrils){ctx.beginPath();let started=false;for(let s=0;s<=30;s++){const frac=s/30;const lat=tr.startLat+frac*tr.length*Math.PI;const lon=tr.startLon+rot+frac*tr.curve;const ext=1+frac*frac*0.6;const p=proj(lat,lon,r*ext);const depth=(p.z+r*ext)/(2*r*ext);if(depth<0.05){started=false;continue;}const a=tr.bright*(0.1+depth*0.5)*(1-frac*0.7);ctx.strokeStyle=`rgba(134,188,37,${Math.max(0,a)})`;ctx.lineWidth=tr.width*(1-frac*0.5)*depth;if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);}ctx.stroke();}
+raf.current=requestAnimationFrame(draw);};draw();
+return()=>{running=false;cancelAnimationFrame(raf.current);};
+},[size]);
+return <canvas ref={ref} style={{width:size,height:size}}/>;
+};
+
+const Btn=({children,onClick,active,size="md",disabled})=>{
+const pad=size==="lg"?{padding:"14px 40px",fontSize:16}:size==="sm"?{padding:"8px 20px",fontSize:13}:{padding:"12px 28px",fontSize:14};
+return(<button onClick={onClick} disabled={disabled} style={{borderRadius:50,transition:"all 0.2s",background:C.blue,color:C.white,border:"none",boxShadow:active?`0 0 20px ${C.blue}66`:"none",...SEMI,...pad,opacity:disabled?0.3:1,cursor:disabled?"not-allowed":"pointer"}}
+onMouseEnter={e=>{if(!disabled)e.currentTarget.style.background=C.blueHover;}}
+onMouseLeave={e=>{if(!disabled)e.currentTarget.style.background=C.blue;}}
+>{children}</button>);
+};
+
+const StageIcon=({stage,size=100})=>{
+const gid=`sg${stage}${Math.random().toString(36).slice(2,5)}`;
+return(
+<svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+<defs><linearGradient id={gid} x1="20" y1="10" x2="80" y2="90" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor={stage===0?"#00D4AA":stage===1?"#86BC25":"#00B8D4"}/><stop offset="100%" stopColor={stage===0?"#007C6A":stage===1?"#4A8C00":"#0077A9"}/></linearGradient></defs>
+<circle cx="50" cy="50" r="46" stroke={`url(#${gid})`} strokeWidth="1.5" opacity="0.3"/>
+<circle cx="50" cy="50" r="38" stroke={`url(#${gid})`} strokeWidth="0.8" opacity="0.15"/>
+{stage===0&&<><circle cx="44" cy="44" r="16" stroke={`url(#${gid})`} strokeWidth="3"/><line x1="56" y1="56" x2="70" y2="70" stroke={`url(#${gid})`} strokeWidth="4" strokeLinecap="round"/><circle cx="40" cy="40" r="2" fill={`url(#${gid})`} opacity="0.8"/><line x1="40" y1="34" x2="40" y2="46" stroke={`url(#${gid})`} strokeWidth="1" opacity="0.4"/><line x1="34" y1="40" x2="46" y2="40" stroke={`url(#${gid})`} strokeWidth="1" opacity="0.4"/></>}
+{stage===1&&<><line x1="50" y1="75" x2="50" y2="28" stroke={`url(#${gid})`} strokeWidth="3" strokeLinecap="round"/><path d="M40 38 L50 24 L60 38" stroke={`url(#${gid})`} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M50 55 C38 52,30 44,32 36 C34 44,40 48,50 50" stroke={`url(#${gid})`} strokeWidth="2" fill={`url(#${gid})`} opacity="0.3"/><path d="M50 45 C62 42,68 34,66 28 C64 36,58 40,50 42" stroke={`url(#${gid})`} strokeWidth="2" fill={`url(#${gid})`} opacity="0.3"/><path d="M35 75 L65 75" stroke={`url(#${gid})`} strokeWidth="1.5" strokeLinecap="round" opacity="0.3"/></>}
+{stage===2&&<><path d="M50 20 C44 28,42 40,42 52 L50 56 L58 52 C58 40,56 28,50 20Z" stroke={`url(#${gid})`} strokeWidth="2.5" fill={`url(#${gid})`} fillOpacity="0.15" strokeLinejoin="round"/><path d="M42 48 L34 58 L42 54" stroke={`url(#${gid})`} strokeWidth="2" fill={`url(#${gid})`} fillOpacity="0.2" strokeLinejoin="round"/><path d="M58 48 L66 58 L58 54" stroke={`url(#${gid})`} strokeWidth="2" fill={`url(#${gid})`} fillOpacity="0.2" strokeLinejoin="round"/><circle cx="50" cy="38" r="4" stroke={`url(#${gid})`} strokeWidth="1.5" fill={`url(#${gid})`} fillOpacity="0.1"/><path d="M46 56 C46 62,48 70,50 76 C52 70,54 62,54 56" stroke="#FF8C00" strokeWidth="1.5" opacity="0.7"/><path d="M48 56 C48 60,49 66,50 70 C51 66,52 60,52 56" fill="#FFD700" opacity="0.5"/></>}
+</svg>);
+};
+
+const ProfileIcon=({size=52})=>(
+<svg width={size} height={size} viewBox="0 0 36 36" fill="none">
+<defs><linearGradient id="pig" x1="0" y1="0" x2="36" y2="36"><stop offset="0%" stopColor={C.blue}/><stop offset="100%" stopColor="#005F6B"/></linearGradient></defs>
+<rect rx="10" width="36" height="36" fill="url(#pig)" opacity="0.15"/>
+<circle cx="18" cy="13" r="5" stroke={C.blue} strokeWidth="1.8" fill="none"/>
+<path d="M8 30 C8 23 12 20 18 20 C24 20 28 23 28 30" stroke={C.blue} strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+</svg>
+);
+
+const LEVELS=["L5","L10","L15","L20","L25","L30","L35","L40","L45","L50","L55","L60","L65","L70"];
+const STAGES=[{label:"Exploring",period:"Year 1"},{label:"Growing",period:"Years 2-3"},{label:"Thriving",period:"Year(s) 3+"}];
+const pathwayData={"Community & Practice":{0:["A Level Experience (Ax) Program","Ascend Engineering Community"],1:["DevEx + Resiliency Services L&D","DTA: AI / Quantum / Unlimited Reality Guilds"],2:["DevEx + Resiliency Services L&D","DTA: AI / Quantum / Unlimited Reality Guilds"]},"Engineering Trainings (All)":{0:[{n:"SE I Offering Pathways",c:C.green},{n:"Engineering Bootcamp (Full-Stack)",c:C.blue},{n:"CS: PowerPoint Tips/Tricks/Pointers",c:C.blue},{n:"DLHP: Curiosity EHC",c:C.blue},{n:"Ascend (Platform - TBD)",c:C.blueDark},{n:"DTA Gen AI (101 Tracks)",c:C.blueDark}],1:[{n:"SE I Offering Pathways",c:C.green},{n:"DTA Persona-Based Pathways (e.g., Developer, Engineer)",c:C.blue},{n:"DTA Gen AI (101 Tracks)",c:C.blueDark},{n:"CS: Solving Problems w/Data",c:C.blue}],2:[{n:"SE I Offering Pathways",c:C.green},{n:"DTA Gen AI (101 / 201 Tracks)",c:C.blueDark},{n:"DTA Persona-Based Pathways (e.g., Developer, Engineer)",c:C.blue},{n:"DLHP: Tailoring Comms.",c:C.blue}]},"Milestones":{0:[{n:"Embark (New Analysts)",c:C.blue}],1:"N/A",2:"N/A"},"Onboarding":{0:[{n:"DLaunch (Campus)",c:C.gray600},{n:"Arrive (Campus)",c:C.blue},{n:"EHO Activ./Anchor/Accelerate (Exp.)",c:C.blue}],1:"N/A",2:"N/A"}};
+const influencers=[{l:"G&D: Green Dot",c:C.gray600},{l:"G&D: Consulting Services",c:C.blue},{l:"JF (E&P)",c:C.blueDark},{l:"OP (ex. AI&E)",c:C.green},{l:"Industry/Sector",c:"#16a34a"}];
+
+function App(){
+const[scr,setScr]=useState("landing");
+const[region,setRegion]=useState(null);
+const[level,setLevel]=useState(null);
+const[stage,setStage]=useState(null);
+const[fade,setFade]=useState(true);
+const go=(s,o={})=>{setFade(false);setTimeout(()=>{setScr(s);if(o.region!==undefined)setRegion(o.region);if(o.level!==undefined)setLevel(o.level);if(o.stage!==undefined)setStage(o.stage);setFade(true);},200);};
+const prof=[{k:"Position Title",v:"Software Engineer II"},{k:"Location",v:region||"US"},{k:"OP",v:"AI&E"},{k:"Offering",v:"EaaS"},{k:"JF",v:"Engineering & Product"},{k:"SF",v:"Software Engineering"}];
+const BackBtn=({onClick,label="Back"})=>(<button onClick={onClick} style={{display:"flex",alignItems:"center",gap:8,marginTop:32,borderRadius:50,color:C.gray400,padding:"8px 20px",border:`1px solid ${C.border}`,...SEMI,fontSize:13,background:"none",transition:"all 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.blue;e.currentTarget.style.color=C.blue;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.gray400;}}>← {label}</button>);
+const Logo=()=><LogoImg h={48}/>;
+const getBreadcrumbs=()=>{
+const items=[{label:"Home",onClick:()=>go("landing")}];
+if(scr==="region")items.push({label:"Region"});
+else if(scr==="level"){items.push({label:"Region",onClick:()=>go("region")});items.push({label:`Level (${region})`});}
+else if(scr==="career"){items.push({label:"Region",onClick:()=>go("region")});items.push({label:`Level (${region})`,onClick:()=>go("level")});items.push({label:"Career Stage"});}
+else if(scr==="pathway"){items.push({label:"Region",onClick:()=>go("region")});items.push({label:`Level (${region})`,onClick:()=>go("level")});items.push({label:"Career Stage",onClick:()=>go("career")});items.push({label:`${STAGES[stage].label}`});}
+return items;};
+
+const pageStyle={minHeight:"100vh",display:"flex",flexDirection:"column",background:C.black};
+const centerCol={flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 24px",textAlign:"center"};
+
+return(
+<div style={{...REG,minHeight:"100vh",background:C.bg}}>
+<div style={{transition:"opacity 0.3s",opacity:fade?1:0}}>
+
+{scr==="landing"&&(
+<div style={pageStyle}>
+<div style={{padding:"24px 32px"}}><Logo/></div>
+<div style={{flex:1,display:"flex",alignItems:"center",padding:"0 64px",gap:16,flexWrap:"wrap"}}>
+<div style={{flex:1,maxWidth:500}}>
+<h1 style={{fontSize:48,color:C.white,lineHeight:1.15,...LIGHT,margin:"0 0 20px"}}>Welcome to the<br/><span style={{color:C.green,...BOLD}}>Engineering & Product</span><br/>Learning Pathways Portal</h1>
+<p style={{fontSize:16,marginBottom:32,lineHeight:1.7,color:C.gray400,maxWidth:460,...REG}}>Deep Dive to Your Growth & Development Journey. Explore personalized learning pathways aligned to your role, level, and career stage.</p>
+<Btn size="lg" onClick={()=>go("region")}>Get Started</Btn>
+</div>
+<div style={{flex:1,display:"flex",justifyContent:"center"}}><AnimSphere size={500}/></div>
+</div>
+<div style={{padding:24,fontSize:12,color:C.gray400,...REG}}>© 2026 Deloitte Development LLC. All rights reserved.</div>
+</div>
+)}
+
+{scr==="region"&&(
+<div style={pageStyle}>
+<div style={{padding:"24px 32px"}}><Logo/></div>
+<Breadcrumb items={getBreadcrumbs()}/>
+<div style={centerCol}>
+<OrganicSphere size={320}/>
+<h2 style={{fontSize:30,marginTop:24,marginBottom:12,color:C.white,...LIGHT}}>Select Your <span style={BOLD}>Region</span></h2>
+<p style={{marginBottom:4,fontSize:14,color:C.gray400,maxWidth:480,...REG}}>Aligning on where Job Family plays a role in learning is a critical input to the future G&D Strategy.</p>
+<p style={{fontSize:14,fontStyle:"italic",marginBottom:40,color:C.green,...REG}}>Choose your region to explore the learning pathway.</p>
+<div style={{display:"flex",gap:20}}>
+<Btn size="lg" onClick={()=>go("level",{region:"US"})}>United States</Btn>
+<Btn size="lg" onClick={()=>go("level",{region:"India"})}>India</Btn>
+</div>
+<BackBtn onClick={()=>go("landing")}/>
+</div>
+</div>
+)}
+
+{scr==="level"&&(
+<div style={pageStyle}>
+<div style={{padding:"24px 32px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+<Logo/>
+<span style={{fontSize:14,padding:"6px 16px",borderRadius:50,background:`${C.blue}20`,color:C.blue,border:`1px solid ${C.blue}40`,...SEMI}}>{region}</span>
+</div>
+<Breadcrumb items={getBreadcrumbs()}/>
+<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px",gap:48,flexWrap:"wrap"}}>
+<div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+<h2 style={{fontSize:30,marginBottom:8,color:C.white,...LIGHT}}>Select Your <span style={BOLD}>Level</span></h2>
+<p style={{fontSize:14,fontStyle:"italic",marginBottom:40,color:C.green,...REG}}>Select your level to view the recommended learning pathway.</p>
+<div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:12,maxWidth:700,width:"100%"}}>
+{LEVELS.map(lv=><Btn key={lv} onClick={()=>go("career",{level:lv})}>{lv}</Btn>)}
+</div>
+<BackBtn onClick={()=>go("region")} label="Back to region"/>
+</div>
+<div><OrganicSphere size={260}/></div>
+</div>
+</div>
+)}
+
+{scr==="career"&&(
+<div style={pageStyle}>
+<div style={{padding:"24px 32px"}}><Logo/></div>
+<Breadcrumb items={getBreadcrumbs()}/>
+<div style={{flex:1,display:"flex",flexDirection:"column",padding:"0 56px"}}>
+<div style={{display:"flex",flexWrap:"wrap",gap:"4px 32px",marginBottom:16,padding:"12px 16px",borderRadius:8,background:C.card,border:`1px solid ${C.border}`}}>
+{prof.map(p=><span key={p.k} style={{fontSize:12,...REG}}><span style={{color:C.gray400}}>{p.k}: </span><span style={{color:C.green,...SEMI}}>{p.v}</span></span>)}
+</div>
+<p style={{fontSize:14,fontStyle:"italic",marginBottom:16,color:C.green,...REG}}>Select a career stage to explore focus areas and suggested learning.</p>
+<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+<div style={{position:"relative",width:"100%",maxWidth:900,height:400}}>
+<svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}} viewBox="0 0 900 400" fill="none" preserveAspectRatio="none">
+<path d="M0 360 C120 360,200 310,320 270 C440 230,500 170,620 130 C740 90,820 45,900 25" stroke={C.green} strokeWidth="3" opacity="0.35"/>
+<path d="M0 360 C120 360,200 310,320 270 C440 230,500 170,620 130 C740 90,820 45,900 25 L900 400 L0 400 Z" fill={C.green} opacity="0.03"/>
+</svg>
+{[{left:"18%",bottom:"5%"},{left:"50%",bottom:"30%"},{left:"82%",bottom:"56%"}].map((pos,i)=>(
+<div key={i} style={{position:"absolute",...pos,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center"}}>
+<div style={{borderRadius:16,padding:20,display:"flex",flexDirection:"column",alignItems:"center",transition:"all 0.2s",cursor:"pointer",background:`${C.card}E0`,border:`1px solid ${C.border}`,backdropFilter:"blur(8px)",minWidth:170}}
+onClick={()=>go("pathway",{stage:i})}
+onMouseEnter={e=>{e.currentTarget.style.borderColor=C.blue;e.currentTarget.style.boxShadow=`0 0 28px ${C.blue}30`;}}
+onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow="none";}}>
+<StageIcon stage={i} size={95}/>
+<span style={{fontSize:16,marginTop:8,color:C.white,...BOLD}}>{STAGES[i].label}</span>
+<span style={{fontSize:12,marginTop:4,marginBottom:12,color:C.gray400,...REG}}>{STAGES[i].period}</span>
+<Btn size="sm" onClick={e=>{e.stopPropagation();go("pathway",{stage:i});}}>{STAGES[i].period}</Btn>
+</div></div>))}
+</div></div>
+<BackBtn onClick={()=>go("level")} label="Back to levels"/>
+<div style={{height:24}}/>
+</div></div>
+)}
+
+{scr==="pathway"&&(
+<div style={pageStyle}>
+<div style={{padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid ${C.border}`}}>
+<Logo/>
+<div style={{display:"flex",gap:8}}>
+{STAGES.map((s,i)=>(
+<button key={i} onClick={()=>setStage(i)} style={{borderRadius:50,fontSize:12,padding:"8px 16px",transition:"all 0.2s",background:stage===i?C.blue:"transparent",color:stage===i?C.white:C.blue,border:`1.5px solid ${stage===i?C.blue:C.blue+"40"}`,...SEMI}}
+onMouseEnter={e=>{if(stage!==i)e.currentTarget.style.background=`${C.blue}15`;}}
+onMouseLeave={e=>{if(stage!==i)e.currentTarget.style.background="transparent";}}
+>{s.label} – {s.period}</button>))}
+</div></div>
+<Breadcrumb items={getBreadcrumbs()}/>
+<div style={{flex:1,display:"flex",gap:20,padding:20}}>
+<div style={{width:192,flexShrink:0,borderRadius:12,padding:16,background:C.card,border:`1px solid ${C.border}`,display:"flex",flexDirection:"column"}}>
+<div style={{display:"flex",justifyContent:"center",marginBottom:12}}><ProfileIcon size={52}/></div>
+{prof.map(p=><div key={p.k} style={{marginBottom:8}}><div style={{color:C.gray600,fontSize:10,textTransform:"uppercase",letterSpacing:"0.5px",...SEMI}}>{p.k}</div><div style={{color:C.white,fontSize:12,...SEMI}}>{p.v}</div></div>)}
+<div style={{marginTop:12,paddingTop:12,borderTop:`1px solid ${C.border}`,display:"flex",justifyContent:"center"}}><StageIcon stage={stage} size={72}/></div>
+<div style={{textAlign:"center",marginTop:4,fontSize:10,color:C.green,...BOLD}}>{STAGES[stage].label}</div>
+</div>
+<div style={{flex:1,minWidth:0}}>
+<div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"6px 16px",borderRadius:50,fontSize:12,marginBottom:16,background:C.blue,color:C.white,...BOLD}}>
+<StageIcon stage={stage} size={18}/>{STAGES[stage].label} – {STAGES[stage].period}
+</div>
+<div style={{display:"flex",flexDirection:"column",gap:10}}>
+{Object.entries(pathwayData).map(([cat,sd])=>{
+const items=sd[stage];
+return(<div key={cat} style={{display:"flex",gap:10,alignItems:"stretch"}}>
+<div style={{width:160,flexShrink:0,borderRadius:8,padding:12,display:"flex",alignItems:"center",background:`${C.green}10`,border:`1px solid ${C.green}18`}}>
+<span style={{fontSize:12,color:C.green,...BOLD}}>{cat}</span></div>
+<div style={{flex:1,borderRadius:8,padding:12,background:C.card,border:`1px solid ${C.border}`}}>
+{items==="N/A"?<span style={{fontSize:12,color:C.gray600,...REG}}>N/A</span>
+:Array.isArray(items)&&typeof items[0]==="string"?<div style={{fontSize:12,lineHeight:1.8,color:C.gray200,...REG}}>{items.map((t,i)=><div key={i}>{t}</div>)}</div>
+:<div style={{display:"flex",flexDirection:"column",gap:4}}>{items.map((t,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:8,height:8,borderRadius:4,flexShrink:0,background:t.c}}/><span style={{fontSize:12,color:C.gray200,...REG}}>{t.n}</span></div>)}</div>}
+</div></div>);})}
+</div>
+<div style={{marginTop:20,borderRadius:8,padding:10,display:"flex",flexWrap:"wrap",alignItems:"center",gap:12,background:C.card,border:`1px solid ${C.border}`}}>
+<span style={{fontSize:12,fontStyle:"italic",color:C.white,...BOLD}}>Primary Influencer:</span>
+{influencers.map(inf=><div key={inf.l} style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:5,background:inf.c}}/><span style={{fontSize:12,fontStyle:"italic",color:C.gray400,...REG}}>{inf.l}</span></div>)}
+</div>
+<div style={{marginTop:6,fontSize:12,fontStyle:"italic",color:C.gray600,...REG}}>CE: Communication Excellence (India only) | CS: Core Skills Learning | DLHP: Deloitte Leadership and Human Potential</div>
+</div></div>
+<div style={{padding:"0 20px 20px"}}>
+<button onClick={()=>go("career")} style={{fontSize:14,color:C.gray600,...SEMI,transition:"color 0.2s",background:"none",border:"none"}}
+onMouseEnter={e=>e.currentTarget.style.color=C.blue}
+onMouseLeave={e=>e.currentTarget.style.color=C.gray600}>← Back to career stages</button>
+</div></div>
+)}
+
+</div></div>);
+}
+
+ReactDOM.render(<App/>,document.getElementById("root"));
+</script>
+</body>
+</html>
