@@ -411,9 +411,7 @@ function App() {
       </div>
     </div>)}
 
-    {scr==="pathway"&&(()=>{
-      const pd = getPD();
-      return(<div style={pg}>
+    {scr==="pathway"&&(<div style={pg}>
         <div style={{padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid "+C.border}}>
           <Logo/>
           <div style={{display:"flex",gap:8}}>{STAGES.map((s,i)=>(<button key={i} onClick={()=>setStage(i)} style={{borderRadius:50,fontSize:12,padding:"8px 16px",background:stage===i?C.blue:"transparent",color:stage===i?C.white:C.blue,border:"1.5px solid "+(stage===i?C.blue:C.blue+"40"),...S,transition:"all 0.2s"}}>{s.label+" \u2013 "+s.period}</button>))}</div>
@@ -429,7 +427,7 @@ function App() {
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"6px 16px",borderRadius:50,fontSize:12,marginBottom:16,background:C.blue,color:C.white,...B}}><StageIcon stage={stage} size={18}/>{STAGES[stage].label+" \u2013 "+STAGES[stage].period}</div>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {Object.entries(pd).map(([cat,sd])=>{
+              {Object.entries(getPD()).map(([cat,sd])=>{
                 const items=sd[stage]; const isOB=cat==="Onboarding"; const empty=Array.isArray(items)&&items.length===0;
                 return(<div key={cat}>
                   {isOB&&<div style={{marginBottom:4,marginLeft:168,fontSize:12,fontStyle:"italic",color:"#F59E0B",...S}}>{"\u26A0 New Experienced or Campus Hires ONLY"}</div>}
@@ -459,8 +457,7 @@ function App() {
           </div>
         </div>
         <div style={{padding:"0 20px 20px"}}><button onClick={()=>go("career")} style={{fontSize:14,color:C.gray600,...S,background:"none",border:"none",cursor:"pointer",transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color=C.blue} onMouseLeave={e=>e.currentTarget.style.color=C.gray600}>{"\u2190 Back to career stages"}</button></div>
-      </div>);
-    })()}
+      </div>)}
 
     </div></div>
   );
